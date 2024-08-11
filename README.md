@@ -5,7 +5,7 @@ Here is some of the visualizations and work I have helped set up in the past.
 For my undergraduate capstone, I asked the question, when will the sport, Ultimate Frisbee be added to the Olympics. The reason I chose this is because I was part of Loyala's team during my four years there, and my senior year, I was the president. So, I thought it would be interesting to include the sport in my proposal. The proposal highlights what I learned during my four years majoring in Data Science and Statistics.
 
 ## Report
-This is my final for my graduate data visualization class. It is 10 different charts regarding the health of American states as well as the proposed legislation. This displays my ability to create various charts in R as well as using R Shiny and R flexdashboard.
+This is my final for my graduate data visualization class. It is 10 different charts regarding the health of American states as well as the proposed legislation. This displays my ability to create various charts in R as well as using R Shiny and R flexdashboard. Although not in the report, I worked with tableau and python during this course.
 
 ## IBM 
 
