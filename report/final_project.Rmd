@@ -1,0 +1,351 @@
+---
+title: "Final Project"
+author: "Elizabeth Smith"
+date: "7/24/2024"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(ggcorrplot)
+library(ggplot2)
+library(ggraph)
+library(ggthemes)
+library(hrbrthemes)
+library(igraph)
+library(lattice)
+library(maps)
+library(RColorBrewer)
+library(tidyverse)
+library(viridis)
+library(waffle)
+library(webshot2)
+library(wordcloud2)
+
+# Reading the Data
+legis <- read_csv("CDC_Nutrition__Physical_Activity__and_Obesity_-_Legislation_20240609.csv")
+health <- read_csv("Nutrition__Physical_Activity__and_Obesity_-_Behavioral_Risk_Factor_Surveillance_System.csv")
+
+# Cleaning the Data 
+## Removing US territories and NA data values
+health <- health %>% filter(LocationAbbr != 'GU' & LocationAbbr != 'PR' & is.na(Data_Value) == FALSE)
+
+```
+
+## Introduction
+
+Have you ever wondered, how many people are affected by unhealthy habits? And if so, has it ever been followed with the question, what is the government trying to do to help its people become healthier? The CDC has studied these questions in the past and created data sets that help us understand how many people are leading a healthy lifestyle. Furthermore, what the states are proposing and enacting in order to help Americans become healthier.
+
+The CDC has two data sets that will be studied, *Nutrition, Physical Activity, and Obesity – Behavioral Risk Factor Surveillance System* from 2020 and *CDC Nutrition, Physical Activity, and Obesity – Legislation* from 2023.
+
+The first data set, *Nutrition, Physical Activity, and Obesity – Behavioral Risk Factor Surveillance System*, contains data that is grouped into three categories: Nutrition, Physical Activity, and Obesity / Weight Status. This data represents the percentage of a state’s population, by year from 2012 to 2022, that falls into one of the questions asked regarding the mentioned categories.
+
+*Nutrition*: This category is based on the general nutrition and eating habits of a state’s population. The following questions are answered in the dataset: “Percent of adults who report consuming fruit less than one time daily” and “Percent of adults who report consuming vegetables less than one time daily.”
+
+*Physical Activity*: This category measures the amount of exercise adults receive and how strenuous the workout. For this category, the following questions are answered: “Percent of adults who engage in no leisure-time physical activity”, “Percent of adults who achieve at least 300 minutes a week of moderate-intensity aerobic physical activity or 150 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)”, “Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic physical activity and engage in
+muscle-strengthening activities on 2 or more days a week”, “Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)”, and “Percent of adults who engage in muscle-strengthening activities on 2 or more days a week.”
+
+*Obesity / Weight Status*: This last category gives percentages on the weight classification of a state’s population for overweight and obese people. It provides data for these questions: “Percent of adults aged 18 years and older who have obesity” and “Percent of adults aged 18 years and older who have an overweight classification.”
+
+This set is used to better understand the next data set retrieved from the *CDC, CDC Nutrition, Physical  Activity, and Obesity – Legislation*. It measures the amount of legislation proposed by the state’s government regarding the three categories mentioned above. This set offers general information on the proposed bill, the category, the specific area that is affected, its setting, the title of the bill, and its status.
+
+All of this comes together to show a general view of the country’s health, by state, and the legislation being proposed to help its citizens lead a healthier lifestyle. This proposal will help the viewer better understand how the country and states are affected by people’s health. Furthermore, the viewer can learn what actions the states are taking to make it easier for people to live healthier or teach its children how to begin to make better choices. The questions that will be studied will pertain to trends of health over time, status of bill policies that are being proposed, and which states are trying or have actively enacted legislation regarding the different categories.
+
+I chose this topic because health and fitness are important in my everyday life. I make it my goal to work out multiple times a week and to eat a balanced diet. A person’s everyday lifestyle can have significant consequences on his or her health. Not only is having a balanced life imperative for physical health, but it also plays a major role in mental. Studies have shown that eating right and working out will reduce stress
+and improve mood. In addition, starting to work out and eat balanced will lead to fewer problems later in life. With this in mind, the following charts will help create a better, and more accurate, picture of the health and lifestyle of Americans.
+
+
+# Charts:
+## Figure 1: The Percentage of Adults who Lead Unhealthy Lives
+
+```{r, Chart 1: Line Chart Over Time by Unhealthy Question Categories, include=FALSE}
+
+health_avg <- health %>% select(YearStart, Class, Question, Data_Value) %>% filter(Question %in% c('Percent of adults who engage in no leisure-time physical activity', 'Percent of adults aged 18 years and older who have obesity', 'Percent of adults aged 18 years and older who have an overweight classification', 'Percent of adults who report consuming fruit less than one time daily', 'Percent of adults who report consuming vegetables less than one time daily')) %>% group_by(YearStart, Class, Question) %>% summarize(average = mean(Data_Value)) %>% mutate(Question = recode(Question,
+                        "Percent of adults who engage in no leisure-time physical activity" = '% of Adults who do not engage in Physical Activity',
+                        "Percent of adults aged 18 years and older who have obesity" = '% of Adults that have Obesity', 
+                        'Percent of adults aged 18 years and older who have an overweight classification' = '% of Adults Who Are Overweight',
+                        'Percent of adults who report consuming fruit less than one time daily' = '% of Adults who do not eat friut daily',
+                        'Percent of adults who report consuming vegetables less than one time daily' = '% of Adults who do not eat vegetables daily'))
+
+ggplot(health_avg, aes(x = YearStart, y = average, color = Question)) + geom_line() + geom_point() + ggtitle('The Percentage of Adults Who Lead Unhealthy Lives by Questions') + ylab('Average Percentage of All States') + scale_x_discrete('Year', limits = c(2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022)) + theme(axis.text.x = element_text(angle=45))
+
+```
+![Figure 1](Figure1.png)
+
+Looking at the above graph, some key takeaways are observed. To summarize, the above line chart takes the health data from the CDC. The lines represent the questions in which the data point provides the percentage of adults who are not living a balanced life. The questions chosen were re-written to condense and cover the three separate categories. One of the first things to notice is that the Nutrition data does not span the entire chart, just from 2017 to 2021. However, in just those four years, it can be concluded that more people are not eating fruit at least once daily. In fact, the slope is quite steep from 2017 to 2018 which asks the question if it was accurately polled or if the percentages represent the true population. Regarding the Physical Activity trends, the numbers oscillate between the years with an overall upward trend until the year 2020 when it levels out around 25% of adults not performing daily physical activity. Lastly, for the Weight Status category, a promising trend is that the percentage of people considered to be overweight is on a downward trend. However, when studying the line for obese adults, it has the largest growth out of any of the other lines displayed. This poses the question if the overweight classification is decreasing due to the people here moving to obese or if they are adopting a healthier lifestyle. Regardless, one concerning aspect of this chart is that the overall trend shows an increase in unhealthy habits.
+
+## Figure 2: Bar Chart Over Time of Bills Proposed
+
+```{r, Chart 2: Line Chart Over Time of Bills Proposed, include=FALSE}
+
+bill_stat <- legis %>% select(Year, HealthTopic, Status) %>% group_by(Year, HealthTopic, Status) %>% summarize(cnt_bills = n()) %>% arrange(Year, Status, HealthTopic)
+
+ggplot(bill_stat, aes(x = as.character(Year), y = cnt_bills, fill = Status)) + geom_bar(position = 'dodge', stat = 'identity') + facet_wrap(~HealthTopic) + theme(axis.text.x = element_text(angle=90)) + labs(fill = 'Bill Status', y = 'Number of Bills', x = 'Year', title = 'Bar Plot of Bill Status by Year for Each Category')
+
+```
+![Figure 2](Figure11.png)
+ For the above chart, it is calculating the number of bills and their statuses for each category. The bills can take on one of these statuses once proposed: Introduced, Vetoed, Enacted, or Dead. When the status is _Introduced_, it means that it was formally submitted to be considered. A _Vetoed_ status means that the governor in Congress will not sign it due to finding it unconstitutional. Another status a bill can have is _Dead_ which means that it was never passed within the state’s congress. The last status is _Enacted_ which means the bill was approved and passed by a state’s congress and governor. What is interesting is that the majority, if not all, of the bills proposed were enacted for each category before 2008 and 2009. Around this time, the United States was experiencing a major recession and people were struggling. To combat this, the states could have proposed more legislation, although most seem to have not been enacted. In addition, during this time Michelle Obama was very vocal about living a healthy life. Perhaps the states decided to heed her words and propose more legislation to help its citizens or bring awareness. Generally, the total number of bills peaked around the year 2010 and then had 
+
+
+## Figure 3: Choropleth of the Number of Bills propsed
+
+```{r, Chart 3: Choropleth , include=FALSE}
+state_map <- map_data("state")
+
+avg_bill_state <- legis %>% select(LocationDesc) %>% group_by(LocationDesc) %>% mutate(LocationDesc = tolower(LocationDesc)) %>% summarize(cnt_bills = n())
+
+combo <- left_join(x = state_map, y = avg_bill_state, by = c("region" = "LocationDesc"))
+
+map <- ggplot(combo, mapping = aes(x= long, y= lat, group = group, fill = cnt_bills)) + geom_polygon(color="black") + ggtitle('Map of the Number of Bills Proposed for Each State') + ylab('Latitude') + xlab('Longitude') + labs(fill = 'Number of Bills') 
+map + theme_void() + scale_colour_viridis_d(option = "plasma") 
+
+```
+![Figure 3](Figure4.png)
+
+This map shows the total number of bills for each state. To gather the data, a count was taken for each state. The darker the color, the smaller the number of bills. Judging by color, the state with the least bills proposed is South Dakota. This is checked within the data and found that a mere 53 bills were proposed within the given time. The state with the highest count of proposed bills is New York with 3331 total bills proposed, once again validated through the data. From this map, it is easy to see that New York is an outlier. Many states fall into the 1000 bill range with some states falling around 2000. One observation made is that the states that tend to pass more bills, excluding Texas, tend to be considered Democratic, or blue, states. So, from the chart, it can be determined that these states tend to propose more bills concerning these health categories.
+
+## Figure 4: Violin Chart for Class and Count of Bills for New York
+
+```{r, Chart 4: Violin Plot, include=FALSE}
+
+## Finding which state prposed the most bills
+legis %>% select(LocationAbbr) %>% group_by(LocationAbbr) %>% summarize(count_bills = n()) %>% arrange(desc(count_bills))
+
+## Gathering the data by class
+healthNY <- health %>% filter(LocationAbbr == 'NY')
+legisNY <- legis %>%filter(LocationAbbr == 'NY') %>% select(Year, HealthTopic) %>% group_by(Year, HealthTopic) %>% summarize(count_bill = n())
+
+joinNy <- healthNY %>% inner_join(legisNY, by = c('YearStart' = 'Year', 'Class' = 'HealthTopic'))
+joinNy_dat <- joinNy %>% distinct(YearStart, Class, Question, Data_Value, count_bill) %>% arrange(YearStart, Class, Question)
+
+noWO <- joinNy %>% filter(Question == "Percent of adults who engage in no leisure-time physical activity" ) %>% select(Data_Value) 
+
+plot <- ggplot() + geom_violin(data = joinNy_dat, aes(x = count_bill, y = Data_Value, fill = Class), width = 1.4) + scale_fill_manual(values=c('red', 'blue')) + ggtitle(label = 'Violin Chart to Compare the Count of Bills to Values of Questions', subtitle = 'State of New York') + xlab('Count of Bills Proposed') + ylab('Percentage Value from Questions')
+
+plot + geom_boxplot(data = noWO, aes(y = Data_Value, color = 'No Leisure Activities'), width = 10) + scale_color_manual(values='blue') + labs(color = 'Box Plot of No Leisure Time Activities for NY', alpha = .6) + theme_solarized() 
+```
+![Figure 4](Figure3.png)
+
+  The violin chart above represents the number of bills proposed and the percentage of people included within each question for the state of New York. The reason why New York was chosen is that it had the greatest number of bills proposed out of all the states. So, it would be interesting to find the reasoning behind this. Are its citizens generally unhealthier? The violin plot compares the percentages for each question grouped by class
+(vertical axis) to the number of bills proposed (horizontal axis). What we can see is that overall, New Yorkers in general exercise a fair amount. However, along with the Physical Activity category is the percentage of adults who perform no leisure time activities. The box plot shows that on average almost 30% of people do not perform extra physical activity each week, which is relatively high. So, it is no surprise that there are many bills proposed around the average response to that question. Furthermore, the box plot shows that the median percentage falls into the largest portion for physical activity meaning that the upper bound will be for the percentages of time worked out. In addition, when viewing the Obesity / Weight Status class, a high number of people answered that they are in the Overweight or Obese classification. What can also be noticed is that most bills proposed in New York fall around this percent indicating a large volume when the data values are 40%. So, it shows that New York is actively trying to put laws into place to help the population become healthier.
+
+
+## Figure 5: Waffle Chart of the Average Value for Each Question
+```{r, Chart 5: Waffle Chart, include=FALSE}
+avg_value <- health %>% distinct(Class, Question, Data_Value) %>% group_by(Class, Question) %>% summarize(avg_value = median(Data_Value)) %>% arrange(Question) %>% mutate(Question = recode(Question,
+                        "Percent of adults who engage in no leisure-time physical activity" = 'Do not engage in Physical Activity',
+                        "Percent of adults aged 18 years and older who have obesity" = 'Have Obesity', 
+                        'Percent of adults aged 18 years and older who have an overweight classification' = 'Overweight',
+                        'Percent of adults who report consuming fruit less than one time daily' = 'Do Not Eat Friut Daily',
+                        'Percent of adults who report consuming vegetables less than one time daily' = 'Do Not Eat Vegetables Daily',
+                        'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)' = 'Workout >= 150 Minutes of Mod-Intensity/75 Minutes of High-Intensity',
+                         'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic physical activity and engage in muscle-strengthening activities on 2 or more days a week' = 'Workout >= 150 Minutes of Mod-Intensity/75 Minutes of High-Intensity and Strength Train',
+                         'Percent of adults who achieve at least 300 minutes a week of moderate-intensity aerobic physical activity or 150 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)' = 'Workout >= 300 Minutes of Mod-Intensity/150 Minutes of High-Intensity',
+                         'Percent of adults who engage in muscle-strengthening activities on 2 or more days a week' = 'Strength Train >=2 Times a Week'))
+
+ggplot(avg_value, aes(fill = str_wrap(Question), values = avg_value)) + geom_waffle() + labs(title = 'Waffle Chart of the Average Percent of Questions', x = 'Percentage of People', y = 'Percentage of People') + scale_y_discrete('Percentage of People', limits = c(2, 4, 6, 8, 10)) + theme_bw() + theme(legend.position="none") + scale_fill_manual(name = NULL,
+                    values = c("gray", "gray", "gray", "gray", "gray", "gray", "gray", "gray", "gray")) + facet_wrap(~str_wrap(Question))
+```
+![Figure 5](Figure5.png)
+These waffle charts show the median values of all the data values for the health data by question. This will show on average, how the people of the United States answered these questions. With the waffle map, each box represents one percent. So, the more boxes that are present, the higher the median percentage. With this in mind, we can gain insight into the lifestyle of the average American. From the data, we learn that around 48% of adults do not eat fruit daily. In addition, about 59% of people work out over 150 minutes a week. Even though many Americans work out, 38% of the people polled are obese and 44% are overweight. What we can learn from these waffle charts, the majority of people work out a decent amount however, many people neglect eating healthily. It brings forward the assumption that people believe working out indicates a healthy life. However, eating a balanced diet and getting all the necessary nutrients is just as important as working out; without this balance, it can lead to injury.
+
+## Figure 6: Heatmap of Probablities for Enacted Bills
+
+```{r, Chart 6: heat map, include=FALSE}
+
+enacted_legis <- legis %>% select(LocationAbbr, HealthTopic, Status) %>% filter(Status == 'Enacted') %>% group_by(LocationAbbr, HealthTopic, Status) %>% summarize(cnt_en_bills = n())
+
+all_legis <- legis %>% select(LocationAbbr, HealthTopic) %>% group_by(LocationAbbr, HealthTopic) %>% summarize(cnt_bills = n())
+
+prb_enact <- enacted_legis %>% inner_join(all_legis, by = c('LocationAbbr' = 'LocationAbbr', 'HealthTopic' = 'HealthTopic')) %>% arrange(HealthTopic)
+
+prb <- prb_enact %>% summarize(prob = as.numeric(round((cnt_en_bills / cnt_bills)*100, 2))) %>% arrange(LocationAbbr, HealthTopic)
+
+new_prb <- prb[, c('LocationAbbr', 'HealthTopic', 'prob')]
+mean(new_prb$prob)
+
+ggplot(new_prb, aes(LocationAbbr, HealthTopic, fill = prob)) + geom_tile() + scale_fill_viridis(discrete=FALSE) +
+  theme_ipsum() + theme(axis.text.x = element_text(angle = 90, size = 5), axis.text.y = element_text(size = 5)) + labs(title = 'Heat Map of Enacted Bill Percentages by Category and State', y = 'Category', x = 'State', fill = 'Probability') 
+```
+![Figure 6](Figure6.png)
+
+The above chart shows a heat map of percentages of a bill going into law based on state and class. To calculate this data, the legislative set was grouped by state and category. Then, a count function was run for two different statuses. One was only counting enacted bills while the other was counting the total. Once these counts were found, then the percentage was calculated by dividing the number of enacted bills for that category and state by the total number. One observation to note is that Nutrition bills have a higher likelihood of being passed. This could be due to having a larger volume overall as seen in _Figure 2_ meaning more chances of being passed. In addition, bills about obesity and weight have a lesser chance of passing. Meanwhile, Alaska and North Dakota have the highest passing percentages for obesity and weight compared to the other states. This brings up the question as to why these are enacting more bills for this class. Is it due to having higher obesity rates? Overall, a bill seems to have about a 50% chance of passing when viewing this heat map. When calculating the actual mean, it is 44.3%.
+
+
+## Figure 7: Common Topics of Legislation
+
+```{r, Chart 7: Word Cloud, include=FALSE}
+word_legis <- legis %>% select(PolicyTopic) %>% group_by(PolicyTopic) %>% summarize(cnt_topic = n())
+wordcloud2(word_legis, size = 1.2, color = 'random-light', backgroundColor = 'black')
+```
+![Figure 7](Figure7.png)
+
+This is a chart that shows the different policy topics that were covered within the bills. The policy topic is a more detailed description of the proposed bill. So, the Health topic describes the overall purpose of the bill, and the policy topic is the second level and is a little more descriptive. The higher the count of that policy, the larger the word with the biggest being Farm Direct Foods. This is an umbrella policy because these bills cover a wide range of topics including, but not limited to, Healthy School Meals to Natural Resources and General Fund. From these policies, many of them fall under the Nutrition category. This is due to most proposed bills being within that group, especially during the recession. So, by proposing these policies, it shows the government is trying to influence education on health and provide better habits to children and adults. 
+
+## Figure 8: Scatterplot of Average Response and Enacted Probablity by Question and State
+
+```{r, Chart 8: Scatter Plot, include=FALSE}
+
+enacted_legis <- legis %>% select(LocationAbbr, HealthTopic, Status) %>% filter(Status == 'Enacted') %>% group_by(LocationAbbr, HealthTopic, Status) %>% summarize(cnt_en_bills = n())
+
+all_legis <- legis %>% select(LocationAbbr, HealthTopic) %>% group_by(LocationAbbr, HealthTopic) %>% summarize(cnt_bills = n())
+
+prb_enact <- enacted_legis %>% inner_join(all_legis, by = c('LocationAbbr' = 'LocationAbbr', 'HealthTopic' = 'HealthTopic')) %>% arrange(HealthTopic)
+
+prb <- prb_enact %>% summarize(prob = as.numeric(round((cnt_en_bills / cnt_bills)*100, 2))) %>% arrange(LocationAbbr, HealthTopic)
+
+prb_health <- health %>% select(LocationAbbr, Class, Question, Data_Value) %>% group_by(LocationAbbr, Class, Question) %>% filter(is.na(Data_Value) == FALSE) %>% summarize(avg_data = mean(Data_Value))
+
+join_prb <- prb %>% inner_join(prb_health, by = c('LocationAbbr' = 'LocationAbbr', 'HealthTopic' = 'Class')) %>% arrange(LocationAbbr, HealthTopic, Question) %>% mutate(Question = recode(Question,
+                        "Percent of adults who engage in no leisure-time physical activity" = 'Do not engage in Physical Activity',
+                        "Percent of adults aged 18 years and older who have obesity" = 'Have Obesity', 
+                        'Percent of adults aged 18 years and older who have an overweight classification' = 'Overweight',
+                        'Percent of adults who report consuming fruit less than one time daily' = 'Do Not Eat Friut Daily',
+                        'Percent of adults who report consuming vegetables less than one time daily' = 'Do Not Eat Vegetables Daily',
+                        'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)' = 'Workout >= 150 Minutes Mod-Intensity/75 Minutes High-Intensity',
+                         'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic physical activity and engage in muscle-strengthening activities on 2 or more days a week' = 'Workout >= 150 Minutes Mod-Intensity/75 Minutes High-Intensity and Strength Train',
+                         'Percent of adults who achieve at least 300 minutes a week of moderate-intensity aerobic physical activity or 150 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)' = 'Workout >= 300 Minutes of Mod-Intensity/150 Minutes of High-Intensity',
+                         'Percent of adults who engage in muscle-strengthening activities on 2 or more days a week' = 'Strength Train >=2 Times a Week'))
+
+ggplot(join_prb, aes(avg_data, prob, color = str_wrap(Question), label = LocationAbbr)) + geom_text(check_overlap = TRUE) + labs(title = 'Scatterplot of the Averge Response to Question and Probability of Enacted Bill.', color = 'Question', x = 'Average Question Response', y = 'Probability of Enacted Bill') + theme_dark() + theme(legend.text=element_text(size=5))
+
+```
+![Figure 8](Figure8.png)
+
+This chart shows the average data response for questions by state and compares it to the probability of a bill being enacted by the state. Due to overcrowding of the values, using check_overlap = TRUE, it will remove many of the values stacked on top of each other to gain a more accurate and complete chart. When looking at the heat map in _Figure 6_, the states North Dakota and Alaska were mentioned for having a higher probability of obesity and weight status bills passed. Recall in that chart, both have a 75% passing rate for this class of bills. When looking at the overweight and obesity averages, both Alaska and North Dakota have between 30 and 40% for both categories, which is very high. In addition, for Nutrition, North Dakota scores high for people who do not eat fruit or vegetables daily. Lastly, they have lower scores for people who do not work out consistently when compared to other states. Due to this, it shows that they are states with an unhealthier population. However, when viewing the overall data, it seems to run on a vertical line, with each state having similar average percentages. However, the passing rate for bills increases and it is difficult to find if it is due to an unhealthy population or other causes. One of the next interesting values to check would be the correlation.
+—- See appendix for chart with all the data.
+
+
+## Figure 9: Determing Correlation from Line of Best Fit
+
+```{r, Chart 9: Line of Best Fit, include=FALSE}
+enacted_legis <- legis %>% select(LocationAbbr, HealthTopic, Status) %>% filter(Status == 'Enacted') %>% group_by(LocationAbbr, HealthTopic, Status) %>% summarize(cnt_en_bills = n())
+
+dead_legis <- legis %>% select(LocationAbbr, HealthTopic, Status) %>% filter(Status == 'Dead') %>% group_by(LocationAbbr, HealthTopic, Status) %>% summarize(cnt_en_bills = n())
+
+intro_legis <- legis %>% select(LocationAbbr, HealthTopic, Status) %>% filter(Status == 'Introduced') %>% group_by(LocationAbbr, HealthTopic, Status) %>% summarize(cnt_en_bills = n())
+
+veto_legis <- legis %>% select(LocationAbbr, HealthTopic, Status) %>% filter(Status == 'Vetoed') %>% group_by(LocationAbbr, HealthTopic, Status) %>% summarize(cnt_en_bills = n())
+
+union_legis <- union_all(enacted_legis, dead_legis)  
+union_legis <- union_all(union_legis, intro_legis)
+union_legis <- union_all(union_legis, veto_legis)
+
+prb_legis <- union_legis %>% inner_join(all_legis, by = c('LocationAbbr' = 'LocationAbbr', 'HealthTopic' = 'HealthTopic')) %>% arrange(LocationAbbr, HealthTopic)
+
+prb_all <- prb_legis %>% group_by(LocationAbbr, HealthTopic, Status) %>% summarize(prob = as.numeric(round((cnt_en_bills / cnt_bills)*100, 2))) %>% arrange(LocationAbbr, HealthTopic)
+
+prb_health <- health %>% select(LocationAbbr, Class, Question, Data_Value) %>% group_by(LocationAbbr, Class, Question) %>% filter(is.na(Data_Value) == FALSE) %>% summarize(avg_data = mean(Data_Value))
+
+join_all_prb <- prb_all %>% inner_join(prb_health, by = c('LocationAbbr' = 'LocationAbbr', 'HealthTopic' = 'Class')) %>% mutate(Question = recode(Question,
+                        "Percent of adults who engage in no leisure-time physical activity" = 'Do not engage in Physical Activity',
+                        "Percent of adults aged 18 years and older who have obesity" = 'Have Obesity', 
+                        'Percent of adults aged 18 years and older who have an overweight classification' = 'Overweight',
+                        'Percent of adults who report consuming fruit less than one time daily' = 'Do Not Eat Friut Daily',
+                        'Percent of adults who report consuming vegetables less than one time daily' = 'Do Not Eat Vegetables Daily',
+                        'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)' = 'Workout >= 150 Minutes Mod-Intensity/75 Minutes High-Intensity',
+                         'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic physical activity and engage in muscle-strengthening activities on 2 or more days a week' = 'Workout >= 150 Minutes Mod-Intensity/75 Minutes High-Intensity and Strength Train',
+                         'Percent of adults who achieve at least 300 minutes a week of moderate-intensity aerobic physical activity or 150 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)' = 'Workout >= 300 Minutes of Mod-Intensity/150 Minutes of High-Intensity',
+                         'Percent of adults who engage in muscle-strengthening activities on 2 or more days a week' = 'Strength Train >=2 Times a Week')) %>% arrange(LocationAbbr, HealthTopic, Question)
+
+#cor_mat <- round(cor(join_all_prb[, c('prob', 'avg_data')]), 2)
+
+corr <- data.frame(join_all_prb[, c('Status', 'prob', 'avg_data', 'HealthTopic', 'Question')])
+
+cor(corr[corr[, 'Status'] == 'Dead' & corr[, 'HealthTopic'] == 'Nutrition', c('prob', 'avg_data')]) ## -0.01824879
+cor(corr[corr[, 'Status'] == 'Dead' & corr[, 'HealthTopic'] == 'Obesity / Weight Status', c('prob', 'avg_data')]) ## -0.04611728
+cor(corr[corr[, 'Status'] == 'Dead' & corr[, 'HealthTopic'] == 'Physical Activity', c('prob', 'avg_data')]) ## --0.02771081
+
+cor(corr[corr[, 'Status'] == 'Enacted' & corr[, 'HealthTopic'] == 'Nutrition', c('prob', 'avg_data')]) ## -0.01824879
+cor(corr[corr[, 'Status'] == 'Enacted' & corr[, 'HealthTopic'] == 'Obesity / Weight Status', c('prob', 'avg_data')]) ## 0.05027849
+cor(corr[corr[, 'Status'] == 'Enacted' & corr[, 'HealthTopic'] == 'Physical Activity', c('prob', 'avg_data')])
+## 0.02456444
+
+cor(corr[corr[, 'Status'] == 'Introduced' & corr[, 'HealthTopic'] == 'Nutrition', c('prob', 'avg_data')]) ## .0000923
+cor(corr[corr[, 'Status'] == 'Introduced' & corr[, 'HealthTopic'] == 'Obesity / Weight Status', c('prob', 'avg_data')]) ## -0.035357
+cor(corr[corr[, 'Status'] == 'Introduced' & corr[, 'HealthTopic'] == 'Physical Activity', c('prob', 'avg_data')]) ## -0.02288222
+
+cor(corr[corr[, 'Status'] == 'Vetoed' & corr[, 'HealthTopic'] == 'Nutrition', c('prob', 'avg_data')]) ## -0.08587474
+cor(corr[corr[, 'Status'] == 'Vetoed' & corr[, 'HealthTopic'] == 'Obesity / Weight Status', c('prob', 'avg_data')]) ## 0.04559633
+cor(corr[corr[, 'Status'] == 'Vetoed' & corr[, 'HealthTopic'] == 'Physical Activity', c('prob', 'avg_data')]) ## -0.02788583 
+
+ggplot(corr, aes(y = prob, x = avg_data, color = Status)) + geom_smooth(method = 'lm') +
+geom_point() + facet_wrap(~str_wrap(HealthTopic)) + labs(title = 'Scatterplot to Determine the Line of Best Fit for Categories', x = 'Average Question Response', y = 'Probability of Bill Status') + theme_gray() + scale_colour_brewer(type = "seq", palette = "Spectral")
+
+```
+![Figure 9](Figure9.png)
+
+These scatter plots will help determine whether there is a correlation relationship. It looks at the different values among the various statuses and categories. First off, for Nutrition, it has correlation values for Dead, Enacted, Introduced, and Vetoed as follows: -0.01824879, -0.01824879,.0000923, and -0.08587474. This is shown from the data because there is little relationship between the responses. All the correlation values are close to zero indicating that there is not a strong relationship between the values of average question response and probability of statuses. This is seen in the chart because the points do not show any pattern or trend. Next, for the category of Obesity / Weight Status, it has the correlation values, in the same order as above, -0.04611728, 0.05027849, -0.035357, and 0.04559633. Once again, it has values that are close to zero, once again indicating that there is little to no relationship. As well, there is no discernible pattern from the data, the points are all clustered within twenty percent values. For the last category, Physical Activity, the correlation values are as follows: -0.02771081, 0.02456444, -0.02288222, -0.02788583. As with the other values, there is little to no correlation between these values. In addition, the points on the graph lack any pattern or trend, making it difficult to find a relationship. Another way to confirm is to view the lines of best fit. The slopes of these lines are flat meaning there is no visible relationship between these values. By studying
+the different statuses, the status lines follow a horizontal trend for data value, but the percentages of enacted bills range from 0 to 100. So, there is no relationship between average data value and bill passing percentage and to determine one, there needs to be more information than just bill status.
+
+
+## Figure 10: Circular Bar Chart
+
+```{r, Chart 10: Circular Bar Chart, include=FALSE}
+
+health_gen <- health %>% select(Class, Question, Data_Value, StratificationCategoryId1, StratificationID1) %>% filter(StratificationCategoryId1 == 'GEN') %>% group_by(Class, Question, StratificationCategoryId1, StratificationID1) %>% summarize(avg_value = mean(Data_Value)) %>% mutate(Question = recode(Question,
+                        "Percent of adults who engage in no leisure-time physical activity" = 'Do not engage in Physical Activity',
+                        "Percent of adults aged 18 years and older who have obesity" = 'Have Obesity', 
+                        'Percent of adults aged 18 years and older who have an overweight classification' = 'Overweight',
+                        'Percent of adults who report consuming fruit less than one time daily' = 'Do Not Eat Friut Daily',
+                        'Percent of adults who report consuming vegetables less than one time daily' = 'Do Not Eat Vegetables Daily',
+                        'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)' = '150 Min Mod-Intense/75 Min High-Intense',
+                         'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic physical activity and engage in muscle-strengthening activities on 2 or more days a week' = '150 Min Mod-Intense/75 Min High-Intense and Strength Train',
+                         'Percent of adults who achieve at least 300 minutes a week of moderate-intensity aerobic physical activity or 150 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)' = '300 Min of Mod-Intense/150 Min of High-Intense',
+                         'Percent of adults who engage in muscle-strengthening activities on 2 or more days a week' = 'Strength Train >=2 Times a Week')) %>% arrange(Class, Question, StratificationID1)
+
+health_gen$id <- seq(1,nrow(health_gen))                                                                     
+health_lab <- health_gen                                                              
+
+angle <- 90 - 360 * (health_lab$id - .5) / nrow(health_lab)
+health_lab$hjust <- ifelse( angle < -90, 1, 0)
+health_lab$angle <- ifelse(angle < -90, angle+180, angle)
+
+ggplot(health_gen, aes(x = id, y = avg_value, fill = StratificationID1)) + geom_bar(stat = "identity", position = 'dodge') + ylim(0,100) + theme_minimal() + theme(axis.text = element_blank(), axis.title = element_blank(), panel.grid = element_blank()) + coord_polar(start = 0) + geom_text(data = health_lab, aes(x = id, y = avg_value + 5, label = str_wrap(Question), hjust=hjust), color = "black", fontface = "bold", alpha = 0.6, size = 1.5, angle = health_lab$angle, inherit.aes = FALSE) + labs( fill = 'Gender') + ggtitle('Circle Plot of the Various Question by Gender') + theme(plot.title = element_text(hjust = .5))
+
+```
+![Figure 10](Figure10.png)
+The above figure is a circular bar chart that splits the question averages by gender. This is a comparison between all the men and women who chose to answer this survey over the years. From the data, women tend to eat better and are less likely to be overweight. An interesting aspect of the data though shows men and women having around the same levels of obesity. This is the only similar average within the set. The rest of the questions have a noticeable difference between the genders. Another interesting fact is that men tend to work out longer than women and women are more likely to not work out at all when compared to men. This chart shows the overall comparison between men and women and from it, we can conclude that although men are more likely to work out for longer, women tend to be healthier when it comes to eating and weight status.
+
+# Conclusion
+Working with this data has shown our general attitude as a country when it comes to health. It is no secret that there are many Americans that struggle with weight, and we must wonder, what has failed in our society. Could it be a lack of knowledge on healthy attitudes, lack of availability or affordability, or just a lack of motivation?
+This study has shown that there is a large percentage of the population that is not eating a balanced diet and has an overweight or obese weight classification. One surprising takeaway, at least for me, was that there is a large percentage of people who work out at least 150 minutes a week. In fact, over time this percentage was increasing as well. But another percentage that was increasing was the number of people with an obese classification which is cause for concern. 
+In addition, the number of proposed legislations was studied in tandem with the health data. What trends were spotted was that there was a large spike in the data around the year 2008 but around the year 2015, it went back to previous numbers. So, for a little while, the government was trying to be more involved in creating a healthier country or passing bills to help relieve some of the stress from the recession. However, the initiative did not last long.
+
+
+# Next Steps
+The next steps for this study would be to get more accurate and more thorough data regarding the demographics and overall population of each state. This way, it is easier to understand if certain socio-economic statuses are affected compared to others. For example, are lower-income areas more likely to have people with an overweight or obese classification? Maybe a certain education level is more likely to have better nutrition. Then, the same charts can be run with the updated data to see if the current trends hold. And new charts can be used to make these comparisons. In addition, the legislation that has been proposed regarding the three categories will need to be documented to see if there have been any changes in the number of proposed bills. This data will offer a view of how Americans have been faring over the years and if the government is attempting to help its citizens.
+Also, an interesting next step is to see how mental health plays a part in American’s everyday lives. Now more than ever, people are trying to take care of their whole body. The mind is one of the most important pieces that needs to be exercised and rested. Some questions that can be asked in the surveys could be, “Percentage of adults attending therapy regularly” or “Percentage of adults with a diagnosed mental illness.” These questions can help understand which state’s citizens prioritize and are aware of their mental health. In addition, it will be interesting to know which states are trying to pass bills that affect these people or services.
+This topic is important because having a balanced and healthy lifestyle is not specific to one group, it affects all of us. The importance of taking care of one’s body is learned and needs to be prioritized. What many people do not think about is many consequences late in life affected as eating poorly and not taking care of themselves now. It is not too late to begin having a healthier, happier lifestyle. And the government needs to be able to help people who choose this whether it’s by passing laws to educate the importance of diet and exercise in schools, creating access to fresh and healthy food, or offering even incentives. All this will help Americans lead a better life. One thing to keep in mind, the choices made today will have a profound impact on your future.
+
+# Appendix
+- Chart from figure 8 with all data
+![All Data Figure 8](appendix.png)
+
+# Shiny Link
+[shinylink: https://elizabeth-smith-jh.shinyapps.io/final_project_data_vis/](https://elizabeth-smith-jh.shinyapps.io/final_project_data_vis/)
+
+This shiny app creates multiple density plots for the question. By choosing a question, it will filter the data to show the distribution of all the values grouped by year. This will help to see any trends. The data used in this chart is the question (which will be chosen by the user), the year, and the percentage of people who fall into the question value. Within the set, the data is also split by state, but this was omitted because only the percentage value was needed. I chose to make this interactive because it is important to understand trends over time. Using the overall class categories, Nutrition, Obesity / Weight Status, and Physical Activity, would have been helpful, but by using the questions, we can see in greater detail what exactly is increasing or decreasing.
+
+To use this app, the user will need to click on a button or choose the question, he or she wants to view. Then, the chart will automatically upload and produce the density plot for every year found within the data. Some questions may have more years due to the fact they have been asked more frequently. One thing to note, the “Year” value on the y-axis goes in decreasing order. What is interesting about the data is that the percentage of the population who does not perform any physical activity is decreasing but, the percentage of the population that is obese is increasing. So, it brings the question forward of how is the sample population for each state determined and is it an accurate representation of the population?
+
+
+# Bibliography
+Centers for Disease Control and Prevention (2023). CDC Nutrition, Physical Activity, and Obesity – Legislation. 
+
+  Centers for Disease Control and Prevention [publisher]. 
+
+  https://data.cdc.gov/Nutrition-Physical-Activity-and-Obesity/CDC-Nutrition-Physical-Activity-and-Obesity-Legisl/
+  
+  nxst-x9p4/about_data 
+
+Centers for Disease Control and Prevention (2020). Nutrition, Physical Activity, and Obesity – Behavioral Risk 
+
+  Factor Surveillance System. Centers for Disease Control and Prevention [publisher]. 
+
+  https://catalog.data.gov/dataset/nutrition-physical-activity-and-obesity-behavioral-risk-factor-surveillance-sys
+  
+  tem 
+
